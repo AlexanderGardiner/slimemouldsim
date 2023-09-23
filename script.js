@@ -1,14 +1,12 @@
 let moulds = [];
-let mouldTrails = [];
 let cells = [];
 let canvasResolutionMultiplier = 1;
 let xResolution = 1000;
 let yResolution = 1000;
-let trailIncrement = 5;
 
-let sensorDistance = 2;
+let sensorDistance = 4;
 let sensorSize = 3; // Side of square
-let sensorAngle = Math.PI/6;
+let sensorAngle = Math.PI/3;
 let angleAdjustmentAfterSensorReading = Math.PI/8;
 let amountGreaterForAngleAdjustement = 20;
 
@@ -54,18 +52,15 @@ class emptyCell {
 function updateCanvasData() {
   const imageData = viewCTX.getImageData(0, 0, xResolution * canvasResolutionMultiplier, yResolution * canvasResolutionMultiplier);
 
-  // Access the pixel data array
   const pixelData = imageData.data;
 
-  // Create a 2D array to store the pixel values
   const pixelArray = new Array(yResolution * canvasResolutionMultiplier);
 
-  // Iterate over each pixel and store its RGBA values in the 2D array
   for (let y = 0; y < yResolution * canvasResolutionMultiplier; y++) {
     pixelArray[y] = new Array(xResolution * canvasResolutionMultiplier);
     
     for (let x = 0; x < xResolution * canvasResolutionMultiplier; x++) {
-      const index = (y * xResolution * canvasResolutionMultiplier + x) * 4; // Each pixel consists of 4 values: R, G, B, and A
+      const index = (y * xResolution * canvasResolutionMultiplier + x) * 4;
       
       const red = pixelData[index];
       const green = pixelData[index + 1];
@@ -77,6 +72,7 @@ function updateCanvasData() {
 
   canvasData = pixelArray;
 }
+
 function initalizeMoulds() {
   for (let y = 0; y<yResolution; y++) {
     cells.push([]);
@@ -87,17 +83,13 @@ function initalizeMoulds() {
   
   for (let y = 0; y<yResolution; y++) {
     for (let x = 0; x<xResolution; x++) {
-      if (Math.random()>0.99) { 
+      if (Math.random()>0.8) { 
         let mould = new mouldCell();
         moulds.push(mould);
         cells[mould.y][mould.x] = mould;
       }   
     } 
   }
-}
-
-function clearCanvas() {
-  viewCTX.clearRect(0, 0, xResolution * canvasResolutionMultiplier, yResolution * canvasResolutionMultiplier);
 }
 
 function drawMoulds() {
@@ -108,45 +100,16 @@ function drawMoulds() {
   
 }
 
-function drawMouldTrails() {
-  for (let i=0; i<mouldTrails.length; i++) {
-    viewCTX.fillStyle = "rgb("+mouldTrails[i].brightness+", "+mouldTrails[i].brightness+", "+mouldTrails[i].brightness+")";
-    viewCTX.fillRect(mouldTrails[i].x * canvasResolutionMultiplier, mouldTrails[i].y * canvasResolutionMultiplier, 1*canvasResolutionMultiplier, 1*canvasResolutionMultiplier);
-  }
-  
-}
-
-
-
-function updateTrails() {
-  for (let i=0; i<moulds.length; i++) {
-    if (moulds[i].brightness+trailIncrement<255) {
-      mouldTrails.push(new mouldTrailCell(moulds[i].x, moulds[i].y, moulds[i].brightness));
-    }
-  }
-
-  for (let i=0; i<mouldTrails.length; i++) {
-    if (mouldTrails[i].brightness+trailIncrement<255) {
-      mouldTrails[i].brightness += trailIncrement;
-    } else {
-      mouldTrails.shift();
-      i--;
-    }
-  }
-  
-    
-    
-}
-
 function detect(mould) {
   let leftSensorX = mould.x + Math.cos(mould.angle - sensorAngle) * sensorDistance;
   let leftSensorY = mould.y + Math.sin(mould.angle - sensorAngle) * sensorDistance;
   
   leftSensorX = Math.floor(leftSensorX);
   leftSensorY = Math.floor(leftSensorY);
+
   let leftSensorValue = 0;
   for (let y=0; y<sensorSize*canvasResolutionMultiplier; y++) {
-    for (let x=-1; x<sensorSize*canvasResolutionMultiplier-1; x++) {
+    for (let x=0; x<sensorSize*canvasResolutionMultiplier; x++) {
       if (leftSensorY+y<canvasData.length && leftSensorY+y>=0) {
         if (leftSensorX+x<canvasData[leftSensorY+y].length && leftSensorX+x>=0) {
           leftSensorValue += canvasData[leftSensorY+y][leftSensorX+x];
@@ -156,19 +119,16 @@ function detect(mould) {
       
     }
   }
-  // viewCTX.fillStyle = "blue";
-  // viewCTX.fillRect(leftSensorX, leftSensorY, sensorSize*canvasResolutionMultiplier, sensorSize*canvasResolutionMultiplier)
-
-
 
   let rightSensorX = mould.x + Math.cos(mould.angle + sensorAngle) * sensorDistance;
   let rightSensorY = mould.y + Math.sin(mould.angle + sensorAngle) * sensorDistance;
   
   rightSensorX = Math.floor(rightSensorX);
   rightSensorY = Math.floor(rightSensorY);
+
   let rightSensorValue = 0;
   for (let y=0; y<sensorSize*canvasResolutionMultiplier; y++) {
-    for (let x=-1; x<sensorSize*canvasResolutionMultiplier-1; x++) {
+    for (let x=0; x<sensorSize*canvasResolutionMultiplier; x++) {
       if (rightSensorY+y<canvasData.length && rightSensorY+y>=0) {
         if (rightSensorX+x<canvasData[rightSensorY+y].length && rightSensorX+x>=0) {
           rightSensorValue += canvasData[rightSensorY+y][rightSensorX+x];
@@ -178,14 +138,11 @@ function detect(mould) {
       
     }
   }
-  // viewCTX.fillStyle = "red";
-  // viewCTX.fillRect(rightSensorX, rightSensorY, sensorSize*canvasResolutionMultiplier, sensorSize*canvasResolutionMultiplier)
-
 
   if (leftSensorValue+amountGreaterForAngleAdjustement<rightSensorValue) {
-    mould.angle += angleAdjustmentAfterSensorReading;
-  } else if (leftSensorValue>rightSensorValue+amountGreaterForAngleAdjustement) {
     mould.angle -= angleAdjustmentAfterSensorReading;
+  } else if (leftSensorValue>rightSensorValue+amountGreaterForAngleAdjustement) {
+    mould.angle += angleAdjustmentAfterSensorReading;
   }
 
 
@@ -206,7 +163,6 @@ function updateMouldPositions() {
       mouldYSpeed = mouldYSpeed * -1;
       moulds[i].angle = -moulds[i].angle;
     } 
-    
 
     moulds[i].x += mouldXSpeed
     moulds[i].y += mouldYSpeed;
@@ -233,7 +189,6 @@ function updateSpeeds() {
         moulds[i].brightness -= cells[cellInFrontY][cellInFrontX].brightness;
       }
     }
-    
 
   }
 }
@@ -241,36 +196,40 @@ function updateSpeeds() {
 let previousRenderTime = 0;
 let previousTickTime = performance.now();
 let currentTickTime = performance.now();
+let running = false;
 
 function tick() {
-  currentTickTime = performance.now();
-  document.getElementById("FPS").innerHTML = "FPS: " + 1000/(currentTickTime-previousTickTime)
-  updateTrails();
-  updateMouldPositions();
+  if (running) {
+    currentTickTime = performance.now();
+    document.getElementById("FPS").innerHTML = "FPS: " + (1000/(currentTickTime-previousTickTime)).toFixed(2);;
+    updateMouldPositions();
 
-  if (currentTickTime-previousRenderTime>50) {
-    clearCanvas();
+    viewCTX.fillStyle = "white";
+    viewCTX.globalAlpha = 0.05;
+    viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height)
+    viewCTX.globalAlpha = 1;
     drawMoulds();
-    drawMouldTrails();
     updateCanvasData();
     previousRenderTime = performance.now()
+
+    for (let i=0; i<moulds.length; i++) {
+      detect(moulds[i]);
+    }
+
+    previousTickTime = currentTickTime;
   }
   
-  for (let i=0; i<moulds.length; i++) {
-    detect(moulds[i]);
-  }
-
-  previousTickTime = currentTickTime;
   
   requestAnimationFrame(tick);
 }
-function startTicking() {
-  tick();
+function toggleRunning() {
+  running = !running;
 }
 
 
 initalizeMoulds();
 drawMoulds();
+tick();
 
 
 

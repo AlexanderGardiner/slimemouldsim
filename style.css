@@ -7,3 +7,8 @@ html {
   border: 1px solid blue;
   image-rendering: pixelated;
 }
+
+#UserOptions {
+  float: left;
+  display:inline-block;
+}
