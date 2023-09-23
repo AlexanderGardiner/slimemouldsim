@@ -4,4 +4,6 @@ html {
 }
 
 #viewCanvas {
+  border: 1px solid blue;
+  image-rendering: pixelated;
 }
