@@ -3,7 +3,7 @@ let canvasResolutionMultiplier = 1;
 let xResolution = 300;
 let yResolution = 300;
 
-let sensorDistance = 20;
+let sensorDistance = 15;
 let sensorSize = 3; // Side of square
 let sensorAngle = Math.PI/3;
 let angleAdjustmentAfterSensorReading = Math.PI/8;
@@ -30,7 +30,7 @@ class mouldCell {
   }
 }
 
-function updateCanvasData() {
+async function updateCanvasData() {
   const imageData = viewCTX.getImageData(
     0,
     0,
@@ -70,13 +70,16 @@ function initalizeMoulds() {
   }
 }
 
-function drawMoulds() {
+async function drawMoulds() {
   moulds.forEach(mould => {
-    viewCTX.fillRect(mould.x, mould.y, 1 * canvasResolutionMultiplier, 1 * canvasResolutionMultiplier);
+    drawMould(mould);
   });
   
 }
 
+async function drawMould(mould) {
+  viewCTX.fillRect(mould.x, mould.y, 1 * canvasResolutionMultiplier, 1 * canvasResolutionMultiplier);
+}
 function detect(mould) {
   let leftSensorX = mould.x + Math.cos(mould.angle - sensorAngle) * sensorDistance;
   let leftSensorY = mould.y + Math.sin(mould.angle - sensorAngle) * sensorDistance;
@@ -126,25 +129,29 @@ function detect(mould) {
 }
 
 
-function updateMouldPositions() {
+async function updateMouldPositions() {
   for (let i = 0; i<moulds.length; i++) {
-    let mouldXSpeed = Math.cos(moulds[i].angle) * moulds[i].speed;
-    let mouldYSpeed = Math.sin(moulds[i].angle) * moulds[i].speed;
-
-    if (moulds[i].x + mouldXSpeed>xResolution-1 || moulds[i].x + mouldXSpeed<=0) {
-      mouldXSpeed = mouldXSpeed * -1;
-      moulds[i].angle = Math.PI - moulds[i].angle;
-    }
-    
-    if (moulds[i].y + mouldYSpeed>yResolution-1 || moulds[i].y + mouldYSpeed<=0) {
-      mouldYSpeed = mouldYSpeed * -1;
-      moulds[i].angle = -moulds[i].angle;
-    } 
-
-    moulds[i].x += mouldXSpeed
-    moulds[i].y += mouldYSpeed;
+    updateMouldPosition(moulds[i]);
 
   }
+}
+
+async function updateMouldPosition(mould) {
+  let mouldXSpeed = Math.cos(mould.angle) * mould.speed;
+  let mouldYSpeed = Math.sin(mould.angle) * mould.speed;
+
+  if (mould.x + mouldXSpeed>xResolution-1 || mould.x + mouldXSpeed<=0) {
+    mouldXSpeed = mouldXSpeed * -1;
+    mould.angle = Math.PI - mould.angle;
+  }
+  
+  if (mould.y + mouldYSpeed>yResolution-1 || mould.y + mouldYSpeed<=0) {
+    mouldYSpeed = mouldYSpeed * -1;
+    mould.angle = -mould.angle;
+  } 
+
+  mould.x += mouldXSpeed
+  mould.y += mouldYSpeed;
 }
 
 
