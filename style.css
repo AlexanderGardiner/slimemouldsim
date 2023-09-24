@@ -5,10 +5,17 @@ html {
 
 #viewCanvas {
   border: 1px solid blue;
-  image-rendering: pixelated;
+  image-rendering: smooth;
+  position: absolute;
+    top:0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin:auto;
 }
 
 #UserOptions {
   float: left;
   display:inline-block;
+  padding-right: 10%;
 }
