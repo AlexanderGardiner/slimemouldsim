@@ -1,12 +1,12 @@
 let moulds = [];
-let xResolution = 500;
-let yResolution = 500;
+let xResolution = 300;
+let yResolution = 300;
 
-let sensorDistance = 20;
+let sensorDistance = 10;
 let sensorSize = 3; // Side of square
-let sensorAngle = Math.PI / 4;
-let angleAdjustmentAfterSensorReading = Math.PI / 12;
-let amountGreaterForAngleAdjustement = 50;
+let sensorAngle = Math.PI / 6;
+let angleAdjustmentAfterSensorReading = Math.PI / 7;
+let amountGreaterForAngleAdjustement = 100;
 
 let viewCanvas = document.getElementById("viewCanvas");
 let viewCTX = viewCanvas.getContext("2d");
@@ -29,16 +29,6 @@ class mouldCell {
   }
 }
 
-function updateCanvasData() {
-  let imageData = viewCTX.getImageData(
-    0,
-    0,
-    xResolution ,
-    yResolution 
-  );
-
-  rawCanvasData = imageData.data;
-}
 
 function initalizeMoulds() {
   for (let y = 0; y < yResolution; y++) {
@@ -55,6 +45,7 @@ function initalizeMoulds() {
 function drawMouldsWithImageData() {
   // Create a copy of the existing canvas data
   const imageData = viewCTX.getImageData(0, 0, xResolution , yResolution );
+  rawCanvasData = imageData.data;
   const canvasDataArray = new Uint8ClampedArray(imageData.data.buffer);
 
   for (let i = 0; i < moulds.length; i++) {
@@ -70,16 +61,6 @@ function drawMouldsWithImageData() {
 
   // Put the modified canvas data back on the canvas
   viewCTX.putImageData(imageData, 0, 0);
-}
-function drawMoulds() {
-  moulds.forEach(mould => {
-    drawMould(mould);
-  });
-
-}
-
-function drawMould(mould) {
-  viewCTX.fillRect(mould.x, mould.y, 1 , 1 );
 }
 
 function getLeftSensorValue(mould) {
@@ -135,19 +116,22 @@ function updateMouldPosition(mould) {
   let mouldXSpeed = Math.cos(mould.angle) * mould.speed;
   let mouldYSpeed = Math.sin(mould.angle) * mould.speed;
 
-  if (mould.x + mouldXSpeed > xResolution - 1 || mould.x + mouldXSpeed <= 0) {
+  if (mould.x + mouldXSpeed > xResolution - 1 || mould.x + mouldXSpeed < 0) {
+    // Reflect the mold at the canvas boundaries
     mouldXSpeed = mouldXSpeed * -1;
     mould.angle = Math.PI - mould.angle;
   }
 
-  if (mould.y + mouldYSpeed > yResolution - 1 || mould.y + mouldYSpeed <= 0) {
+  if (mould.y + mouldYSpeed > yResolution - 1 || mould.y + mouldYSpeed < 0) {
+    // Reflect the mold at the canvas boundaries
     mouldYSpeed = mouldYSpeed * -1;
     mould.angle = -mould.angle;
   }
 
-  mould.x += mouldXSpeed
+  mould.x += mouldXSpeed;
   mould.y += mouldYSpeed;
 }
+
 
 
 let previousTickTime = performance.now();
@@ -159,23 +143,22 @@ function tick() {
   if (running) {
     currentTickTime = performance.now();
     document.getElementById("FPS").innerHTML = "FPS: " + (1000 / (currentTickTime - previousTickTime)).toFixed(2);;
-    updateMouldPositions();
+    
 
     viewCTX.fillStyle = getRandomRGBColor();
-    viewCTX.globalAlpha = 0.05;
+    
     viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height)
-    viewCTX.globalAlpha = 1;
-    viewCTX.fillStyle = "rgb(216, 91, 221)";
-    // drawMoulds();
+    
     drawMouldsWithImageData();
-    updateCanvasData();
 
     for (let i = 0; i < moulds.length; i++) {
       detect(moulds[i]);
     }
+    updateMouldPositions();
 
     previousTickTime = currentTickTime;
   }
+  
 
 
   requestAnimationFrame(tick);
@@ -192,14 +175,12 @@ function toggleRunning() {
   // running = true;
   running = !running;
 }
-
-viewCTX.fillStyle = "black";
-viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height)
+viewCTX.fillStyle = "rgb(0, 0, 0)";
+viewCTX.globalAlpha = 1;
+viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height);
+viewCTX.globalAlpha = 0.05;
 initalizeMoulds();
-viewCTX.fillStyle = "rgb(216, 91, 221)";
-drawMoulds();
-updateCanvasData();
+drawMouldsWithImageData();
 tick();
-
 
 
