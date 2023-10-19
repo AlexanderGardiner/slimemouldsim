@@ -1,21 +1,20 @@
 let moulds = [];
-let canvasResolutionMultiplier = 1;
-let xResolution = 300;
-let yResolution = 300;
+let xResolution = 500;
+let yResolution = 500;
 
-let sensorDistance = 15;
+let sensorDistance = 20;
 let sensorSize = 3; // Side of square
-let sensorAngle = Math.PI/3;
-let angleAdjustmentAfterSensorReading = Math.PI/8;
-let amountGreaterForAngleAdjustement = 100;
+let sensorAngle = Math.PI / 4;
+let angleAdjustmentAfterSensorReading = Math.PI / 12;
+let amountGreaterForAngleAdjustement = 50;
 
 let viewCanvas = document.getElementById("viewCanvas");
 let viewCTX = viewCanvas.getContext("2d");
-let canvasData = [];
+let rawCanvasData = new Uint8ClampedArray(xResolution * yResolution * 4);
 
 
-viewCanvas.width = xResolution * canvasResolutionMultiplier;
-viewCanvas.height = yResolution * canvasResolutionMultiplier;
+viewCanvas.width = xResolution ;
+viewCanvas.height = yResolution ;
 
 class mouldCell {
   constructor() {
@@ -26,102 +25,98 @@ class mouldCell {
     this.angle = Math.random() * 2 * Math.PI;
     this.speed = 1;
 
-    
+
   }
 }
 
-async function updateCanvasData() {
-  const imageData = viewCTX.getImageData(
+function updateCanvasData() {
+  let imageData = viewCTX.getImageData(
     0,
     0,
-    xResolution * canvasResolutionMultiplier,
-    yResolution * canvasResolutionMultiplier
+    xResolution ,
+    yResolution 
   );
 
-  const pixelData = new Uint8Array(imageData.data.buffer);
-
-  const pixelArray = new Array(yResolution * canvasResolutionMultiplier);
-
-  for (let y = 0; y < yResolution * canvasResolutionMultiplier; y++) {
-    pixelArray[y] = new Array(xResolution * canvasResolutionMultiplier);
-
-    for (let x = 0; x < xResolution * canvasResolutionMultiplier; x++) {
-      const index = (y * xResolution * canvasResolutionMultiplier + x) * 4;
-
-      const red = pixelData[index];
-      const green = pixelData[index + 1];
-      const blue = pixelData[index + 2];
-
-      pixelArray[y][x] = red + green + blue;
-    }
-  }
-
-  canvasData = pixelArray;
+  rawCanvasData = imageData.data;
 }
 
 function initalizeMoulds() {
-  for (let y = 0; y<yResolution; y++) {
-    for (let x = 0; x<xResolution; x++) {
-      if (Math.random()>0.1) { 
+  for (let y = 0; y < yResolution; y++) {
+    for (let x = 0; x < xResolution; x++) {
+      if (Math.random() > 0.5) {
         let mould = new mouldCell();
         moulds.push(mould);
-      }   
-    } 
+      }
+    }
   }
 }
 
-async function drawMoulds() {
+
+function drawMouldsWithImageData() {
+  // Create a copy of the existing canvas data
+  const imageData = viewCTX.getImageData(0, 0, xResolution , yResolution );
+  const canvasDataArray = new Uint8ClampedArray(imageData.data.buffer);
+
+  for (let i = 0; i < moulds.length; i++) {
+    const mould = moulds[i];
+    const index = (Math.floor(mould.y) * xResolution  + Math.floor(mould.x)) * 4;
+
+    // Modify the canvas data to change the color where the mold cell is located
+    canvasDataArray[index] = 0; // Red
+    canvasDataArray[index + 1] = 210; // Green
+    canvasDataArray[index + 2] = 200; // Blue
+    canvasDataArray[index + 3] = 255; // Alpha
+  }
+
+  // Put the modified canvas data back on the canvas
+  viewCTX.putImageData(imageData, 0, 0);
+}
+function drawMoulds() {
   moulds.forEach(mould => {
     drawMould(mould);
   });
-  
+
 }
 
-async function drawMould(mould) {
-  viewCTX.fillRect(mould.x, mould.y, 1 * canvasResolutionMultiplier, 1 * canvasResolutionMultiplier);
+function drawMould(mould) {
+  viewCTX.fillRect(mould.x, mould.y, 1 , 1 );
+}
+
+function getLeftSensorValue(mould) {
+  let leftSensorX = ~~(mould.x + Math.cos(mould.angle - sensorAngle) * sensorDistance);
+  let leftSensorY = ~~(mould.y + Math.sin(mould.angle - sensorAngle) * sensorDistance);
+  
+  return sensorValueCalculation(leftSensorX, leftSensorY);
+}
+
+function sensorValueCalculation(sensorX, sensorY) {
+  let sensorValue = 0;
+  const maxY = Math.min(sensorY + sensorSize , yResolution);
+  const maxX = Math.min(sensorX + sensorSize , xResolution);
+
+  for (let y = Math.max(sensorY, 0); y < maxY; y++) {
+    for (let x = Math.max(sensorX, 0); x < maxX; x++) {
+      sensorValue += rawCanvasData[(y*xResolution + x)*4];
+      sensorValue += rawCanvasData[(y*xResolution + x)*4+1];
+      sensorValue += rawCanvasData[(y*xResolution + x)*4+1];
+    }
+  }
+
+  return sensorValue;
+}
+
+function getRightSensorValue(mould) {
+  let rightSensorX = ~~(mould.x + Math.cos(mould.angle + sensorAngle) * sensorDistance);
+  let rightSensorY = ~~(mould.y + Math.sin(mould.angle + sensorAngle) * sensorDistance);
+
+  return sensorValueCalculation(rightSensorX, rightSensorY);
 }
 function detect(mould) {
-  let leftSensorX = mould.x + Math.cos(mould.angle - sensorAngle) * sensorDistance;
-  let leftSensorY = mould.y + Math.sin(mould.angle - sensorAngle) * sensorDistance;
-  
-  leftSensorX = Math.floor(leftSensorX) * canvasResolutionMultiplier;
-  leftSensorY = Math.floor(leftSensorY) * canvasResolutionMultiplier;
-
-  let leftSensorValue = 0;
-  for (let y=0; y<sensorSize*canvasResolutionMultiplier; y++) {
-    for (let x=0; x<sensorSize*canvasResolutionMultiplier; x++) {
-      if (leftSensorY+y<canvasData.length && leftSensorY+y>=0) {
-        if (leftSensorX+x<canvasData[leftSensorY+y].length && leftSensorX+x>=0) {
-          leftSensorValue += canvasData[leftSensorY+y][leftSensorX+x];
-          
-        }
-      }
-      
-    }
-  }
-
-  let rightSensorX = mould.x + Math.cos(mould.angle + sensorAngle) * sensorDistance;
-  let rightSensorY = mould.y + Math.sin(mould.angle + sensorAngle) * sensorDistance;
-  
-  rightSensorX = Math.floor(rightSensorX) * canvasResolutionMultiplier;
-  rightSensorY = Math.floor(rightSensorY) * canvasResolutionMultiplier;
-
-  let rightSensorValue = 0;
-  for (let y=0; y<sensorSize*canvasResolutionMultiplier; y++) {
-    for (let x=0; x<sensorSize*canvasResolutionMultiplier; x++) {
-      if (rightSensorY+y<canvasData.length && rightSensorY+y>=0) {
-        if (rightSensorX+x<canvasData[rightSensorY+y].length && rightSensorX+x>=0) {
-          rightSensorValue += canvasData[rightSensorY+y][rightSensorX+x];
-          
-        }
-      }
-      
-    }
-  }
-
-  if (leftSensorValue+amountGreaterForAngleAdjustement>rightSensorValue) {
+  let leftSensorValue = getLeftSensorValue(mould);
+  let rightSensorValue = getRightSensorValue(mould);
+  if (leftSensorValue + amountGreaterForAngleAdjustement > rightSensorValue) {
     mould.angle -= angleAdjustmentAfterSensorReading;
-  } else if (leftSensorValue<rightSensorValue+amountGreaterForAngleAdjustement) {
+  } else if (leftSensorValue < rightSensorValue + amountGreaterForAngleAdjustement) {
     mould.angle += angleAdjustmentAfterSensorReading;
   }
 
@@ -129,26 +124,26 @@ function detect(mould) {
 }
 
 
-async function updateMouldPositions() {
-  for (let i = 0; i<moulds.length; i++) {
+function updateMouldPositions() {
+  for (let i = 0; i < moulds.length; i++) {
     updateMouldPosition(moulds[i]);
 
   }
 }
 
-async function updateMouldPosition(mould) {
+function updateMouldPosition(mould) {
   let mouldXSpeed = Math.cos(mould.angle) * mould.speed;
   let mouldYSpeed = Math.sin(mould.angle) * mould.speed;
 
-  if (mould.x + mouldXSpeed>xResolution-1 || mould.x + mouldXSpeed<=0) {
+  if (mould.x + mouldXSpeed > xResolution - 1 || mould.x + mouldXSpeed <= 0) {
     mouldXSpeed = mouldXSpeed * -1;
     mould.angle = Math.PI - mould.angle;
   }
-  
-  if (mould.y + mouldYSpeed>yResolution-1 || mould.y + mouldYSpeed<=0) {
+
+  if (mould.y + mouldYSpeed > yResolution - 1 || mould.y + mouldYSpeed <= 0) {
     mouldYSpeed = mouldYSpeed * -1;
     mould.angle = -mould.angle;
-  } 
+  }
 
   mould.x += mouldXSpeed
   mould.y += mouldYSpeed;
@@ -163,36 +158,45 @@ function tick() {
 
   if (running) {
     currentTickTime = performance.now();
-    document.getElementById("FPS").innerHTML = "FPS: " + (1000/(currentTickTime-previousTickTime)).toFixed(2);;
+    document.getElementById("FPS").innerHTML = "FPS: " + (1000 / (currentTickTime - previousTickTime)).toFixed(2);;
     updateMouldPositions();
 
-    viewCTX.fillStyle = "black";
+    viewCTX.fillStyle = getRandomRGBColor();
     viewCTX.globalAlpha = 0.05;
     viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height)
     viewCTX.globalAlpha = 1;
-    viewCTX.fillStyle = "rgb(10, 255, 255)";
-    drawMoulds();
-  
+    viewCTX.fillStyle = "rgb(216, 91, 221)";
+    // drawMoulds();
+    drawMouldsWithImageData();
     updateCanvasData();
 
-    for (let i=0; i<moulds.length; i++) {
+    for (let i = 0; i < moulds.length; i++) {
       detect(moulds[i]);
     }
 
     previousTickTime = currentTickTime;
   }
-  
-  
+
+
   requestAnimationFrame(tick);
 }
+function getRandomRGBColor() {
+  var r = Math.floor(Math.random() * 50);
+  var g = Math.floor(Math.random() * 50);
+  var b = Math.floor(Math.random() * 50);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 function toggleRunning() {
+  // setInterval(tick, 100);
+  // running = true;
   running = !running;
 }
 
 viewCTX.fillStyle = "black";
 viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height)
 initalizeMoulds();
-viewCTX.fillStyle = "rgb(10, 255, 255)";
+viewCTX.fillStyle = "rgb(216, 91, 221)";
 drawMoulds();
 updateCanvasData();
 tick();
