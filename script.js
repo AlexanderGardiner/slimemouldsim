@@ -5,7 +5,7 @@ let yResolution = 1000;
 let sensorDistance = 50;
 let sensorSize = 3; // Side of square
 let sensorAngle = Math.PI / 6;
-let angleAdjustmentAfterSensorReading = Math.PI /10;
+let angleAdjustmentAfterSensorReading = Math.PI /9;
 let amountGreaterForAngleAdjustement = 200;
 
 let viewCanvas = document.getElementById("viewCanvas");
@@ -51,9 +51,9 @@ function drawMouldsWithImageData() {
     const index = (Math.floor(mould.y) * xResolution  + Math.floor(mould.x)) * 4;
 
     // Modify the canvas data to change the color where the mold cell is located
-    canvasDataArray[index] = (11-mould.speed)* 255/11; // Red
+    canvasDataArray[index] = (9-mould.speed)* 255/9; // Red
     canvasDataArray[index + 1] = 150; // Green
-    canvasDataArray[index + 2] = mould.speed * 255/11; // Blue
+    canvasDataArray[index + 2] = mould.speed * 255/9; // Blue
     canvasDataArray[index + 3] = 255; // Alpha
   
     
