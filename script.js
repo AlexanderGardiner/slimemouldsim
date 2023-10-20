@@ -1,12 +1,12 @@
 let moulds = [];
-let xResolution = 300;
-let yResolution = 300;
+let xResolution = 500;
+let yResolution = 500;
 
-let sensorDistance = 10;
+let sensorDistance = 50;
 let sensorSize = 3; // Side of square
 let sensorAngle = Math.PI / 6;
-let angleAdjustmentAfterSensorReading = Math.PI / 7;
-let amountGreaterForAngleAdjustement = 100;
+let angleAdjustmentAfterSensorReading = Math.PI /10;
+let amountGreaterForAngleAdjustement = 200;
 
 let viewCanvas = document.getElementById("viewCanvas");
 let viewCTX = viewCanvas.getContext("2d");
@@ -19,13 +19,11 @@ viewCanvas.height = yResolution ;
 class mouldCell {
   constructor() {
     this.cellType = "mould";
-    this.x = Math.floor(Math.random() * xResolution);
-    this.y = Math.floor(Math.random() * xResolution);
+    this.angle = Math.random() * 2 * Math.PI; 
+    this.x = xResolution/2 + Math.cos(this.angle)*(Math.random()-0.5)*10+(Math.random()-0.5)*50;
+    this.y = yResolution/2 + Math.sin(this.angle)*(Math.random()-0.5)*10+(Math.random()-0.5)*50;
 
-    this.angle = Math.random() * 2 * Math.PI;
-    this.speed = 1;
-
-
+    this.speed = Math.random() * 10 + 1;
   }
 }
 
@@ -33,7 +31,7 @@ class mouldCell {
 function initalizeMoulds() {
   for (let y = 0; y < yResolution; y++) {
     for (let x = 0; x < xResolution; x++) {
-      if (Math.random() > 0.5) {
+      if (Math.random() > 0.2) {
         let mould = new mouldCell();
         moulds.push(mould);
       }
@@ -66,7 +64,8 @@ function drawMouldsWithImageData() {
 function getLeftSensorValue(mould) {
   let leftSensorX = ~~(mould.x + Math.cos(mould.angle - sensorAngle) * sensorDistance);
   let leftSensorY = ~~(mould.y + Math.sin(mould.angle - sensorAngle) * sensorDistance);
-  
+   // viewCTX.fillStyle = "rgb(255, 0, 0)";
+  // viewCTX.fillRect(leftSensorX-sensorSize/2,leftSensorY-sensorSize/2,sensorSize,sensorSize);
   return sensorValueCalculation(leftSensorX, leftSensorY);
 }
 
@@ -89,7 +88,8 @@ function sensorValueCalculation(sensorX, sensorY) {
 function getRightSensorValue(mould) {
   let rightSensorX = ~~(mould.x + Math.cos(mould.angle + sensorAngle) * sensorDistance);
   let rightSensorY = ~~(mould.y + Math.sin(mould.angle + sensorAngle) * sensorDistance);
-
+   // viewCTX.fillStyle = "rgb(0, 0, 255)";
+  // viewCTX.fillRect(rightSensorX-sensorSize/2,rightSensorY-sensorSize/2,sensorSize,sensorSize);
   return sensorValueCalculation(rightSensorX, rightSensorY);
 }
 function detect(mould) {
@@ -145,7 +145,7 @@ function tick() {
     document.getElementById("FPS").innerHTML = "FPS: " + (1000 / (currentTickTime - previousTickTime)).toFixed(2);;
     
 
-    viewCTX.fillStyle = getRandomRGBColor();
+    viewCTX.fillStyle = "rgb(0, 0, 0)";
     
     viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height)
     
@@ -163,12 +163,6 @@ function tick() {
 
   requestAnimationFrame(tick);
 }
-function getRandomRGBColor() {
-  var r = Math.floor(Math.random() * 50);
-  var g = Math.floor(Math.random() * 50);
-  var b = Math.floor(Math.random() * 50);
-  return `rgb(${r}, ${g}, ${b})`;
-}
 
 function toggleRunning() {
   // setInterval(tick, 100);
@@ -178,7 +172,7 @@ function toggleRunning() {
 viewCTX.fillStyle = "rgb(0, 0, 0)";
 viewCTX.globalAlpha = 1;
 viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height);
-viewCTX.globalAlpha = 0.05;
+viewCTX.globalAlpha = 0.1;
 initalizeMoulds();
 drawMouldsWithImageData();
 tick();
