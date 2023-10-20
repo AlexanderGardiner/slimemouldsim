@@ -1,6 +1,6 @@
 let moulds = [];
-let xResolution = 500;
-let yResolution = 500;
+let xResolution = 1000;
+let yResolution = 1000;
 
 let sensorDistance = 50;
 let sensorSize = 3; // Side of square
@@ -31,7 +31,7 @@ class mouldCell {
 function initalizeMoulds() {
   for (let y = 0; y < yResolution; y++) {
     for (let x = 0; x < xResolution; x++) {
-      if (Math.random() > 0.2) {
+      if (Math.random() > 0.8) {
         let mould = new mouldCell();
         moulds.push(mould);
       }
@@ -51,10 +51,12 @@ function drawMouldsWithImageData() {
     const index = (Math.floor(mould.y) * xResolution  + Math.floor(mould.x)) * 4;
 
     // Modify the canvas data to change the color where the mold cell is located
-    canvasDataArray[index] = 0; // Red
-    canvasDataArray[index + 1] = 210; // Green
-    canvasDataArray[index + 2] = 200; // Blue
+    canvasDataArray[index] = (11-mould.speed)* 255/11; // Red
+    canvasDataArray[index + 1] = 150; // Green
+    canvasDataArray[index + 2] = mould.speed * 255/11; // Blue
     canvasDataArray[index + 3] = 255; // Alpha
+  
+    
   }
 
   // Put the modified canvas data back on the canvas
@@ -78,7 +80,7 @@ function sensorValueCalculation(sensorX, sensorY) {
     for (let x = Math.max(sensorX, 0); x < maxX; x++) {
       sensorValue += rawCanvasData[(y*xResolution + x)*4];
       sensorValue += rawCanvasData[(y*xResolution + x)*4+1];
-      sensorValue += rawCanvasData[(y*xResolution + x)*4+1];
+      sensorValue += rawCanvasData[(y*xResolution + x)*4+2];
     }
   }
 
