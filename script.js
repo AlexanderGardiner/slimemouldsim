@@ -2,11 +2,11 @@ let moulds = [];
 let xResolution = 1000;
 let yResolution = 1000;
 
-let sensorDistance = 50;
-let sensorSize = 3; // Side of square
-let sensorAngle = Math.PI / 6;
-let angleAdjustmentAfterSensorReading = Math.PI /9;
-let amountGreaterForAngleAdjustement = 200;
+let sensorDistance = 10;
+let sensorSize = 1; // Side of square
+let sensorAngle = Math.PI / 10;
+let angleAdjustmentAfterSensorReading = Math.PI /10;
+let amountGreaterForAngleAdjustement = 0;
 
 let viewCanvas = document.getElementById("viewCanvas");
 let viewCTX = viewCanvas.getContext("2d");
@@ -23,7 +23,7 @@ class mouldCell {
     this.x = xResolution/2 + Math.cos(this.angle)*(Math.random()-0.5)*10+(Math.random()-0.5)*50;
     this.y = yResolution/2 + Math.sin(this.angle)*(Math.random()-0.5)*10+(Math.random()-0.5)*50;
 
-    this.speed = Math.random() * 10 + 1;
+    this.speed = 1;//Math.random() * 10 + 1;
   }
 }
 
@@ -51,9 +51,9 @@ function drawMouldsWithImageData() {
     const index = (Math.floor(mould.y) * xResolution  + Math.floor(mould.x)) * 4;
 
     // Modify the canvas data to change the color where the mold cell is located
-    canvasDataArray[index] = (9-mould.speed)* 255/9; // Red
-    canvasDataArray[index + 1] = 150; // Green
-    canvasDataArray[index + 2] = mould.speed * 255/9; // Blue
+    canvasDataArray[index] += 10;//(9-mould.speed)* 255/9; // Red
+    canvasDataArray[index + 1] += 20; // Green
+    canvasDataArray[index + 2] = 255; // Blue
     canvasDataArray[index + 3] = 255; // Alpha
   
     
@@ -97,9 +97,9 @@ function getRightSensorValue(mould) {
 function detect(mould) {
   let leftSensorValue = getLeftSensorValue(mould);
   let rightSensorValue = getRightSensorValue(mould);
-  if (leftSensorValue + amountGreaterForAngleAdjustement > rightSensorValue) {
+  if (leftSensorValue - amountGreaterForAngleAdjustement > rightSensorValue) {
     mould.angle -= angleAdjustmentAfterSensorReading;
-  } else if (leftSensorValue < rightSensorValue + amountGreaterForAngleAdjustement) {
+  } else if (leftSensorValue < rightSensorValue - amountGreaterForAngleAdjustement) {
     mould.angle += angleAdjustmentAfterSensorReading;
   }
 
@@ -174,7 +174,7 @@ function toggleRunning() {
 viewCTX.fillStyle = "rgb(0, 0, 0)";
 viewCTX.globalAlpha = 1;
 viewCTX.fillRect(0, 0, viewCanvas.width, viewCanvas.height);
-viewCTX.globalAlpha = 0.1;
+viewCTX.globalAlpha = 0.02;
 initalizeMoulds();
 drawMouldsWithImageData();
 tick();
