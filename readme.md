@@ -33,7 +33,7 @@ This project is a simplified simulation of slime mold behavior, implemented usin
    ```sh
    npm install
    ```
-4. **Run the Game**:
+4. **Start the Server**:
    ```sh
    npm start
    ```
